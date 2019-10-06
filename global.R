@@ -3,6 +3,7 @@ library(rCharts);library(shinythemes);library(shinyWidgets);library(shinydashboa
 library(shinydashboardPlus);library(shinycssloaders);library(billboarder);library(plotly)
 library(doBy);library(plyr);library(dplyr);library(shinydashboardPlus);library(DBI);library(heatmaply)
 library(pool);library(datasets);library(reshape2);library(visNetwork);library(d3heatmap);library(ggsci)
+library(RMySQL)
 
 #################################################################################
 #### Definitions ################################################################

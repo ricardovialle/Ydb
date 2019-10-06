@@ -16,7 +16,7 @@ interaction_table = interaction_table_show_all()
 ###################################################################################
 # Server logic ----
 server <- function(input, output, session) {
-  
+
   # Automatically stop a Shiny app when closing the browser tab
   #session$onSessionEnded(stopApp)
   
@@ -31,6 +31,13 @@ server <- function(input, output, session) {
                                         "AtomInteraction_AntigenAtom","AntigenResidue_AminoAcid",
                                         "AtomInteraction_Type","AtomInteraction_Distance")
   
+  #################################################################################
+  #### HOME: Selection Menus ######################################################
+  #################################################################################
+
+  output$all_pdb_checkbox_sel <- renderPrint({ input$all_pdb_checkbox })
+
+    
   #################################################################################
   #### Selection Control ##########################################################
   ################################################################################# 
@@ -617,7 +624,7 @@ server <- function(input, output, session) {
             number_of_antigenchains,
             number_of_heavychains,
             number_of_lightchains,
-            "?"),
+            "2019-03-25"),
     stringsAsFactors = F
   )
   output$general_stats_tbl = renderTable({dt},
@@ -1621,8 +1628,45 @@ ui <- function(){
   #### Layout for specific pages ####
   home_page = function(){
     fluidRow(
-      column(10, offset = 1,
-             h3("Welcome to Ydb!", style = "font-family: 'Source Sans Pro';")
+      column(10, offset = .5,
+             h3("Welcome to Ydb! - This page is under construction", style = "font-family: 'Source Sans Pro';"),
+             "Choose an option to exhibit the antibody variable domain analysis:",
+             h5("Structures from Protein Data Bank (PDB) that contain antibodies:")
+      ), 
+      column(10, offset = .5,
+             fluidRow(box(
+               title = "Show all stored antibody PDB sequences", status = "primary", solidHeader = TRUE,
+               collapsible = TRUE, collapsed = T,
+               checkboxGroupInput(inputId = "all_pdb_checkbox", label = "", 
+                                  choices = list("Show engineered antibodies" = 1, 
+                                                 "Show only sequences with the right amino acid in conserved positions" = 2,
+                                                 "Show only one VH/VL pair for each PDB file" = 3,
+                                                 "Use identity filter. Cutoff:" = 4),
+                                  selected = c(1,2,3)),
+               hr(),
+               verbatimTextOutput("all_pdb_checkbox_sel")
+             )),
+             fluidRow(box(
+               title = "Filter by PDB IDs", status = "primary", solidHeader = TRUE,
+               collapsible = TRUE, collapsed = T,
+               plotOutput("plot3", height = 250)
+             )),
+             fluidRow(box(
+               title = "Filter by antibody-producing organism", status = "primary", solidHeader = TRUE,
+               collapsible = TRUE, collapsed = T,
+               plotOutput("plot3", height = 250)
+             )),
+             fluidRow(box(
+               title = "Filter by antigen-producing organism", status = "primary", solidHeader = TRUE,
+               collapsible = TRUE, collapsed = T,
+               plotOutput("plot3", height = 250)
+             )),
+             fluidRow(box(
+               title = "Filter by germline classification", status = "primary", solidHeader = TRUE,
+               collapsible = TRUE, collapsed = T,
+               plotOutput("plot3", height = 250)
+             ))
+
       )
     )
   }
