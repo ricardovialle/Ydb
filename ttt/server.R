@@ -346,7 +346,7 @@ complex_table_show_all <- function(){
 #### #### 
 
 #### Function: Complex table (selected) ####
-complex_table_show_selected <- function(params){
+complex_table_show_selected <- function(PDB){
   sql <- paste0("SELECT C.Id, C.Pdb, C.Model, C.DeltaG, C.DeltaSAS, C.Affinity, C.AffinityMethod, C.AffinityTemperature, C.AffinityPmid,
   
   PE.Description AS PDBDescription, PE.Compound AS PDBCompound,
@@ -409,9 +409,9 @@ complex_table_show_selected <- function(params){
   LEFT JOIN Chain AS AC ON A.ChainId = AC.Id 
   LEFT JOIN Species AS SAC ON SAC.Id = AC.SpeciesId
   LEFT JOIN PdbEntry AS PE ON C.Pdb = PE.Pdb 
-  WHERE ?id ORDER BY C.Id ASC;")
+  WHERE C.Pdb IN ", PDB ," ORDER BY C.Id ASC;")
   
-  query <- sqlInterpolate(pool, sql, id = 1)
+  query <- sqlInterpolate(pool, sql)
   complex_table = dbGetQuery(pool, query)
   return(complex_table)
 }
@@ -437,6 +437,9 @@ select_table <- function(engineered_antibodies,
 #################################################################################
 shinyServer(function(input, output, session) {
 
+  RV <- reactiveValues(data = mtcars)
+  
+  #### Filter by ALL ####
   observeEvent(input$actionButton.all_pdb_checkbox, {
     # Check if at least one opions is selected. Show message if not.
     if (length(input$all_pdb_checkbox)==0){
@@ -454,20 +457,40 @@ shinyServer(function(input, output, session) {
     updateTabItems(session, "menu", "complex")
     # Return options to interface
     output$all_pdb_checkbox_sel <- renderPrint({ 
-      return(select_table(engineered_antibodies,
-                          right_amino_acid_in_conserved_positions,
-                          only_one_VHVL_pair,
-                          identity_filter,
-                          identity_cutoff))
+      return(
+        select_table(engineered_antibodies,
+                     right_amino_acid_in_conserved_positions,
+                     only_one_VHVL_pair,
+                     identity_filter,
+                     identity_cutoff)
+      )
     })
   })
+  #### ####
+  
+  #### Filter by PDB ####
+  observeEvent(input$actionButton.filter_by_pdb_radiobutton, {
+    # Get list of PDB IDs from textarea
+    pdbList = input$filter_by_pdb_textarea
+    # Change to table page
+    updateTabItems(session, "menu", "complex")
+    # Check if search if by PDB ID (1) or by PDB+Chain (2)
+    if (input$filter_by_pdb_radiobutton==1){
+      # Update table content
+      pdbList = "('4uif', '5n09')"
+      RV$data <-  complex_table_show_selected(PDB = pdbList)
+    }else{
+      pdbIDs = trimws(unlist(strsplit(pdbList, ",")))
+      # Update table content
+      RV$data <-  complex_table_show_selected(pdbList)
+    }
+  })
+  #### ####
 
   #### Render the table containing shiny inputs ####
   output$complex_table <- DT::renderDataTable({
-    # Get current data 
-    data <- mtcars
     # The table
-    datatable(data, 
+    datatable(RV$data, 
               style = 'bootstrap',
               rownames= FALSE,
               selection = list(mode = "multiple", target= 'row'),
